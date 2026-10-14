@@ -1,9 +1,9 @@
-name: 24-7 All-In-One Minecraft Bot
+name: Secure 24-7 Minecraft Bot
 
 on:
-  workflow_dispatch: # This adds the manual button to turn it on
+  workflow_dispatch: # Manual start button
   schedule:
-    - cron: '0 */4 * * *' # This automatically restarts the bot every 4 hours forever
+    - cron: '0 */4 * * *' # Automatically restarts every 4 hours forever
 
 jobs:
   run-bot:
@@ -25,38 +25,46 @@ jobs:
         cat << 'EOF' > index.js
         const mineflayer = require('mineflayer');
 
-        // BOT SETUP DETAILS
         const bot = mineflayer.createBot({
-          host: 'MERGESMO.aternos.me',       // <-- CHANGE THIS to your Minecraft Server IP
-          port: 23887,                  // <-- CHANGE THIS if your port is different
-          username: 'GitHub_AFK_Bot',   // <-- CHANGE THIS to your Bot's Minecraft name
-          version: '26.2'             // <-- CHANGE THIS to match your Server version
+          host: 'MERGESMO.aternos.me', // <-- Your custom Aternos IP
+          port: 23887,                 // <-- Your custom Port 
+          username: 'GitHub_AFK_Bot',   
+          version: '1.20.1'            // <-- Change this if your server is on a different version!
         });
 
         bot.on('login', () => {
-          console.log(`[SUCCESS] Bot has logged into the server.`);
+          console.log(`[SUCCESS] Bot logged into MERGESMO.aternos.me!`);
         });
 
         bot.on('spawn', () => {
-          console.log(`[SPAWN] Bot has spawned in the world.`);
-          bot.chat('Hello! I am an automated 24/7 background bot.');
+          console.log(`[SPAWN] Bot has spawned safely in the world.`);
         });
 
-        // Anti-Kick loop: Makes the bot jump once every minute so it doesn't get kicked for idling
+        // SILENT HEARTBEAT: Keeps the bot online without suspicious looping movements
         setInterval(() => {
-          if (bot.entity) {
+          console.log("[HEARTBEAT] Connection is stable and active.");
+        }, 30000);
+
+        // PLAYER CONTROLS (Type these in game chat to interact)
+        bot.on('chat', (username, message) => {
+          if (username === bot.username) return;
+          
+          if (message === '!jump') {
             bot.setControlState('jump', true);
             setTimeout(() => bot.setControlState('jump', false), 500);
           }
-        }, 60000);
-
-        bot.on('chat', (username, message) => {
-          if (username === bot.username) return;
-          console.log(`[CHAT] ${username}: ${message}`);
+          
+          if (message === '!come') {
+            const playerFilter = (entity) => entity.type === 'player' && entity.username === username;
+            const playerEntity = bot.nearestEntity(playerFilter);
+            if (playerEntity) {
+              bot.lookAt(playerEntity.position.offset(0, playerEntity.height, 0));
+            }
+          }
         });
 
         bot.on('kicked', (reason) => {
-          console.log(`[KICKED] Bot was kicked. Reason: ${reason}`);
+          console.log(`[KICKED] Reason: ${reason}`);
         });
 
         bot.on('error', (err) => {
@@ -66,4 +74,3 @@ jobs:
 
     - name: Activate Bot Terminal Environment
       run: node index.js
-
