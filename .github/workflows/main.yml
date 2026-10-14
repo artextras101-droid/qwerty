@@ -1,1 +1,69 @@
+name: 24-7 All-In-One Minecraft Bot
+
+on:
+  workflow_dispatch: # This adds the manual button to turn it on
+  schedule:
+    - cron: '0 */4 * * *' # This automatically restarts the bot every 4 hours forever
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Pull Project Files
+      uses: actions/checkout@v4
+
+    - name: Install Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Mineflayer Dependency
+      run: npm install mineflayer
+
+    - name: Write Bot Script
+      run: |
+        cat << 'EOF' > index.js
+        const mineflayer = require('mineflayer');
+
+        // BOT SETUP DETAILS
+        const bot = mineflayer.createBot({
+          host: 'MERGESMO.aternos.me',       // <-- CHANGE THIS to your Minecraft Server IP
+          port: 23887,                  // <-- CHANGE THIS if your port is different
+          username: 'GitHub_AFK_Bot',   // <-- CHANGE THIS to your Bot's Minecraft name
+          version: '1.20.1'             // <-- CHANGE THIS to match your Server version
+        });
+
+        bot.on('login', () => {
+          console.log(`[SUCCESS] Bot has logged into the server.`);
+        });
+
+        bot.on('spawn', () => {
+          console.log(`[SPAWN] Bot has spawned in the world.`);
+          bot.chat('Hello! I am an automated 24/7 background bot.');
+        });
+
+        // Anti-Kick loop: Makes the bot jump once every minute so it doesn't get kicked for idling
+        setInterval(() => {
+          if (bot.entity) {
+            bot.setControlState('jump', true);
+            setTimeout(() => bot.setControlState('jump', false), 500);
+          }
+        }, 60000);
+
+        bot.on('chat', (username, message) => {
+          if (username === bot.username) return;
+          console.log(`[CHAT] ${username}: ${message}`);
+        });
+
+        bot.on('kicked', (reason) => {
+          console.log(`[KICKED] Bot was kicked. Reason: ${reason}`);
+        });
+
+        bot.on('error', (err) => {
+          console.log(`[ERROR] Connection error: ${err}`);
+        });
+        EOF
+
+    - name: Activate Bot Terminal Environment
+      run: node index.js
 
