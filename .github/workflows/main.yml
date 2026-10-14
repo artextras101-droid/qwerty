@@ -30,7 +30,7 @@ jobs:
           host: 'MERGESMO.aternos.me',       // <-- CHANGE THIS to your Minecraft Server IP
           port: 23887,                  // <-- CHANGE THIS if your port is different
           username: 'GitHub_AFK_Bot',   // <-- CHANGE THIS to your Bot's Minecraft name
-          version: '1.20.1'             // <-- CHANGE THIS to match your Server version
+          version: '26.2'             // <-- CHANGE THIS to match your Server version
         });
 
         bot.on('login', () => {
