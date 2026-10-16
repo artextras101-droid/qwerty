@@ -1,89 +1,18 @@
-const mineflayer = require('mineflayer');
-const Movements = require('mineflayer-pathfinder').Movements;
-const pathfinder = require('mineflayer-pathfinder').pathfinder;
-const config = require('./settings.json');
-const express = require('express');
-const dns = require('dns');
-
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('AFK Bot is running 24/7');
-});
-
-app.listen(8080, () => {
-  console.log('[Server] HTTP server started on port 8080');
-});
-
-function createBotInstance() {
-  console.log('==================================================');
-  console.log('[Bot] Creating bot instance...');
-  
-  const botOptions = {
-    username: config['bot-account']['username'],
-    password: config['bot-account']['password'],
-    auth: config['bot-account']['type'],
-    host: config.server.ip,
-    version: config.server.version
-  };
-
-  // If a custom random port is manually put in settings.json, use it directly
-  if (config.server.port && config.server.port !== 25565 && config.server.port !== 0) {
-    botOptions.port = config.server.port;
-    console.log(`[Bot] Connecting via port config: ${config.server.ip}:${config.server.port}`);
-    startMineflayer(botOptions);
-  } else {
-    console.log(`[DNS] Fetching SRV proxy metadata: _minecraft._tcp.${config.server.ip}`);
-    dns.resolveSrv(`_minecraft._tcp.${config.server.ip}`, (err, addresses) => {
-      if (!err && addresses && addresses.length > 0) {
-        botOptions.host = addresses[0].name;
-        botOptions.port = addresses[0].port;
-        console.log(`[DNS] Resolved Proxy Route: ${botOptions.host}:${botOptions.port}`);
-      } else {
-        botOptions.port = 25565; 
-        console.log(`[DNS] Proxy lookup fell back to port 25565`);
-      }
-      startMineflayer(botOptions);
-    });
+{
+  "name": "minecraft-afk-bot",
+  "version": "26.2",
+  "description": "Robust AFK bot for Minecraft servers with infinite uptime.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max-old-space-size=400 index.js",
+    "test": "node --check index.js"
+  },
+  "author": "Lamgerr",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.1",
+    "minecraft-data": "^3.103.0",
+    "mineflayer": "^4.34.0",
+    "mineflayer-pathfinder": "^2.1.1"
   }
 }
-
-function startMineflayer(options) {
-  const bot = mineflayer.createBot(options);
-  bot.loadPlugin(pathfinder);
-
-  bot.once('spawn', () => {
-    console.log('[Bot] Successfully joined the Minecraft server!');
-    
-    if (config.utils['auto-auth'].enabled) {
-      setTimeout(() => {
-        bot.chat(`/register ${config.utils['auto-auth'].password} ${config.utils['auto-auth'].password}`);
-        bot.chat(`/login ${config.utils['auto-auth'].password}`);
-      }, 2000);
-    }
-
-    if (config.utils['anti-afk'].enabled) {
-      setInterval(() => {
-        if (config.utils['anti-afk'].sneak) {
-          bot.setControlState('sneak', true);
-          setTimeout(() => bot.setControlState('sneak', false), 1000);
-        }
-      }, 15000);
-    }
-  });
-
-  bot.on('error', (err) => {
-    console.error(`[Bot Error] ${err.message}`);
-  });
-
-  bot.on('end', (reason) => {
-    console.log(`[Bot] Disconnected: ${reason}`);
-    if (config.utils['auto-reconnect']) {
-      const delay = config.utils['auto-reconnect-delay'] || 5000;
-      console.log(`[Bot] Reconnecting in ${delay / 1000}s...`);
-      setTimeout(() => createBotInstance(), delay);
-    }
-  });
-}
-
-createBotInstance();
