@@ -27,21 +27,21 @@ function createBotInstance() {
     version: config.server.version
   };
 
-  // If the port is a standard fallback or 0, attempt auto-resolution
+  // If a custom random port is manually put in settings.json, use it directly
   if (config.server.port && config.server.port !== 25565 && config.server.port !== 0) {
     botOptions.port = config.server.port;
-    console.log(`[Bot] Connecting directly via config address: ${config.server.ip}:${config.server.port}`);
+    console.log(`[Bot] Connecting via port config: ${config.server.ip}:${config.server.port}`);
     startMineflayer(botOptions);
   } else {
-    console.log(`[DNS] Scanning SRV record details for: _minecraft._tcp.${config.server.ip}`);
+    console.log(`[DNS] Fetching SRV proxy metadata: _minecraft._tcp.${config.server.ip}`);
     dns.resolveSrv(`_minecraft._tcp.${config.server.ip}`, (err, addresses) => {
       if (!err && addresses && addresses.length > 0) {
         botOptions.host = addresses[0].name;
         botOptions.port = addresses[0].port;
-        console.log(`[DNS] Found Dynamic Proxy: ${botOptions.host}:${botOptions.port}`);
+        console.log(`[DNS] Resolved Proxy Route: ${botOptions.host}:${botOptions.port}`);
       } else {
-        botOptions.port = 25565; // Fallback to standard
-        console.log(`[DNS] Proxy lookup failed or timed out. Falling back to port 25565.`);
+        botOptions.port = 25565; 
+        console.log(`[DNS] Proxy lookup fell back to port 25565`);
       }
       startMineflayer(botOptions);
     });
@@ -53,9 +53,8 @@ function startMineflayer(options) {
   bot.loadPlugin(pathfinder);
 
   bot.once('spawn', () => {
-    console.log('\x1b[32m[Bot] Successfully joined the Minecraft server!\x1b[0m');
+    console.log('[Bot] Successfully joined the Minecraft server!');
     
-    // Auto authentication handling
     if (config.utils['auto-auth'].enabled) {
       setTimeout(() => {
         bot.chat(`/register ${config.utils['auto-auth'].password} ${config.utils['auto-auth'].password}`);
@@ -63,7 +62,6 @@ function startMineflayer(options) {
       }, 2000);
     }
 
-    // Anti-AFK Setup
     if (config.utils['anti-afk'].enabled) {
       setInterval(() => {
         if (config.utils['anti-afk'].sneak) {
@@ -74,23 +72,18 @@ function startMineflayer(options) {
     }
   });
 
-  // Critical Error & Disconnect Safeguards (Prevents Railway Crashes)
   bot.on('error', (err) => {
-    console.error(`[Bot Error] Encountered: ${err.message}`);
+    console.error(`[Bot Error] ${err.message}`);
   });
 
   bot.on('end', (reason) => {
-    console.log(`[Bot] Disconnected from server. Reason: ${reason}`);
-    
+    console.log(`[Bot] Disconnected: ${reason}`);
     if (config.utils['auto-reconnect']) {
       const delay = config.utils['auto-reconnect-delay'] || 5000;
       console.log(`[Bot] Reconnecting in ${delay / 1000}s...`);
-      setTimeout(() => {
-        createBotInstance();
-      }, delay);
+      setTimeout(() => createBotInstance(), delay);
     }
   });
 }
 
-// Fire up the instance loop
 createBotInstance();
