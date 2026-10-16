@@ -7,7 +7,7 @@
   },
   "server": {
     "ip": "mergesmo.play.hosting",
-    "port": 25839,
+    "port": 25631,
     "version": "1.20.1",
     "try-creative": false
   },
