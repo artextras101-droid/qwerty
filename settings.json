@@ -6,8 +6,8 @@
     "type": "offline"
   },
   "server": {
-    "ip": "MERGESMO.aternos.me",
-    "port": 23887,
+    "ip": "mergesmo.playhosting",
+    "port": ,
     "version": "1.20.1",
     "try-creative": false
   },
