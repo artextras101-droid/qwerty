@@ -7,7 +7,7 @@
   },
   "server": {
     "ip": "mergesmo.play.hosting",
-    "port": 25631,
+    "port": 25565,
     "version": "1.20.1",
     "try-creative": false
   },
@@ -69,8 +69,8 @@
     "auto-eat": true
   },
   "beds": {
-    "pick-up-day": false,
-    "place-night": false
+    "pick-up-day": true,
+    "place-night": true
   },
   "discord": {
     "enabled": false,
